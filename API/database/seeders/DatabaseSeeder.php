@@ -2,8 +2,11 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Helpers\Role;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Ramsey\Uuid\Uuid;
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,11 +15,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
-
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        User::factory()->create([
+            'id' => Uuid::uuid4()->toString(),
+            'name' => 'Bùi Huy Anh',
+            'email' => 'bujhuyanh150400@gmail.com',
+            'password' => Hash::make('123456789'),
+            'birth' => '2000-04-15 00:00:00',
+            'gender' => 1,
+            'avatar' => null,
+            'permission' => 16,
+            'role' => 16,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
