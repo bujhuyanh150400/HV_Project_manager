@@ -35,7 +35,7 @@ class AuthController extends Controller
             'password' => $request->input('password')
         ]);
         if (!$token) {
-            return response()->json(['error' => 'Tài khoản không tồn tại'], 401);
+            return response()->json(['message' => 'Tài khoản không tồn tại'], 401);
         }
         return $this->createNewToken($token);
     }

@@ -1,19 +1,16 @@
-import {
-    TextField,
-    Button,
-    Container,
-    Typography,
-    Box,
-    FormControl,
-    InputLabel,
-    OutlinedInput,
-    InputAdornment, IconButton
-} from "@mui/material";
 import {useState} from "react";
-import Card from "~/Component/Card.jsx";
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import Constant from "~/utils/constant.js";
+import {Button, Flex, Card, Form, Input, Image, Space} from 'antd';
+import {UserOutlined, LockOutlined, EyeInvisibleOutlined, EyeTwoTone} from '@ant-design/icons';
+import logo from '~/assets/logo.png'
+import {useDispatch} from 'react-redux';
+import {setLoading} from '~/redux/reducers/LoadingSlice'
+import {openToast} from "~/redux/reducers/ToastSlice.js";
+import {loginStart,loginFailed,loginSuccess} from "~/redux/reducers/loginSlice.js";
+import apiRequest from "~/service/apiRequest.js";
+
 const Login = () => {
+    const dispatch = useDispatch();
     const [login, setLogin] = useState({
         email: '',
         password: '',
@@ -22,121 +19,140 @@ const Login = () => {
         email: '',
         password: '',
     });
-    const [showPassword, setShowPassword] = useState(false);
-    const handleLoginForm = (event) => {
-        const {name, value} = event.target;
-        setLogin((prevState) => ({
-            ...prevState,
-            [name]: value,
-        }));
-        setErrors((prevErrors) => ({
-            ...prevErrors,
-            [name]: '', // Xóa bỏ lỗi khi người dùng thay đổi giá trị
-        }));
-    };
-
     const handleValidate = () => {
-        const emailRegex =
-            /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         let formIsValid = true;
         const newErrors = {};
         if (!login.email) {
             formIsValid = false;
             newErrors.email = 'Vui lòng nhập email';
-        }else if (!login.email.match(emailRegex)) {
+        } else if (!login.email.match(Constant.Validate.EMAIL_REGEX)) {
             formIsValid = false;
             newErrors.email = 'Email sai định dạng';
         }
         if (!login.password) {
             formIsValid = false;
             newErrors.password = 'Vui lòng nhập mật khẩu';
+        } else if (login.password.length < 8) {
+            formIsValid = false;
+            newErrors.password = 'Mật khẩu phải trong lớn hơn 8 kí tự';
         }
-        if (!formIsValid) {
-            setErrors(newErrors);
-        }
+        formIsValid === false ?  setErrors(newErrors) :  setErrors(prevState => ({
+            ...prevState,
+            email: '',
+            password: '',
+        }));
         return formIsValid
     }
-
-    const handleSubmit = (event) => {
-        event.preventDefault();
+    const handleSubmit = async () => {
         const formIsValid = handleValidate();
         if (formIsValid) {
-            console.log('Login:', login);
+            dispatch(setLoading(true))
+            dispatch(loginStart(true))
+            try {
+                const res = await apiRequest.apiLogin.handleLogin(login);
+                console.log(res);
+            }catch (error){
+                if(error.code === 422){
+                    error.message = Object.values(error.message);
+                    error.message.forEach((message) => {
+                        dispatch(openToast({
+                            id: Math.random(),
+                            type: Constant.ToastType.ERROR,
+                            message: 'Validate Server',
+                            description: message[0],
+                        }));
+                    });
+                }else{
+                    dispatch(openToast({
+                        id: Math.random(),
+                        type: Constant.ToastType.ERROR,
+                        message: 'Server Response',
+                        description: error.message.message,
+                    }));
+                }
+            }finally {
+                dispatch(setLoading(false));
+            }
         }
     };
+    const handleSuccess = () => {
+        dispatch(openToast({
+            id: Math.random(),
+            type: 'success',
+            message: 'This is a success message',
+            description: 'This is a success message description',
+        }));
+    };
     return (
-        <Container
-            disableGutters
-            maxWidth={false}
-            sx={{
-                height: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'background.main'
-            }}>
-            <Card center={true}>
-                <Box>
-                    <Typography variant="h4" align="center" gutterBottom>
-                        Đăng nhập
-                    </Typography>
-                    <form onSubmit={handleSubmit}>
-                        <TextField
-                            error={Boolean(errors.email)}
-                            name="email"
-                            label="Email"
-                            variant="outlined"
-                            fullWidth
-                            value={login.email}
-                            onChange={handleLoginForm}
-                            helperText={errors.email}
+        <Flex style={{
+            width: "100vw",
+            height: "100vh",
+            backgroundImage: "linear-gradient(to right, #a5f3fc, #3182CE)"
+        }} justify="center" align="center">
+            <Card
+                style={{
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                    padding: "1rem"
+                }}>
+                <Form
+                    name="HVLogin"
+                    initialValues={{remember: true}}
+                    onFinish={handleSubmit}
+                >
+                    <Space direction="vertical" size="small" style={{display: 'flex'}}>
+                        <Image
+                            preview={false}
+                            width={300}
+                            src={logo}
+                            style={{
+                                paddingBottom: "20px"
+                            }}
                         />
-                        <FormControl  variant="outlined">
-                            <InputLabel htmlFor="outlined-adornment-password">Password</InputLabel>
-                            <OutlinedInput
-                                id="outlined-adornment-password"
-                                type={showPassword ? 'text' : 'password'}
-                                endAdornment={
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            aria-label="toggle password visibility"
-                                            onClick={()=>setShowPassword((show) => !show)}
-                                            edge="end"
-                                        >
-                                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                }
-                                label="Password"
-                            />
-                        </FormControl>
-                        <TextField
-                            error={Boolean(errors.password)}
+                        <Form.Item
+                            name="username"
+                            validateStatus={errors.email ? 'error' : ''}
+                            help={errors.email}
+                        >
+                            <Input size="large"
+                                   value={login.email}
+                                   onChange={(e) => setLogin((prevState) => ({
+                                       ...prevState,
+                                       email: e.target.value,
+                                   }))}
+                                   prefix={<UserOutlined/>}
+                                   placeholder="Email đăng nhập"/>
+                        </Form.Item>
+                        <Form.Item
                             name="password"
-                            type="password"
-                            label="Mật khẩu"
-                            variant="outlined"
-                            fullWidth
-                            margin="normal"
-                            value={login.password}
-                            onChange={handleLoginForm}
-                            helperText={errors.password}
-                        />
-                        <Box mt={2}>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                color="primary"
-                                fullWidth
-                            >
-                                Đăng nhập
-                            </Button>
-                        </Box>
-                    </form>
-                </Box>
+                            validateStatus={errors.password ? 'error' : ''}
+                            help={errors.password}
+                        >
+                            <Input.Password
+                                size="large"
+                                value={login.password}
+                                onChange={(e) => setLogin((prevState) => ({
+                                    ...prevState,
+                                    password: e.target.value,
+                                }))}
+                                prefix={<LockOutlined/>}
+                                placeholder="Mật khẩu"
+                                iconRender={(visible) => (visible ? <EyeTwoTone/> : <EyeInvisibleOutlined/>)}
+                            />
+
+                        </Form.Item>
+                        <Form.Item>
+                            <Flex align="center" justify="center">
+                                <Button type="primary" block  htmlType="submit">
+                                    Đăng nhập
+                                </Button>
+                            </Flex>
+                        </Form.Item>
+                    </Space>
+                </Form>
             </Card>
-        </Container>
+        </Flex>
     );
 }
+
 
 export default Login
