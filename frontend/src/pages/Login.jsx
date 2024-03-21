@@ -1,12 +1,12 @@
-import {useState} from "react";
+import { useState } from "react";
 import Constant from "~/utils/constant.js";
-import {Button, Flex, Card, Form, Input, Image, Space} from 'antd';
-import {UserOutlined, LockOutlined, EyeInvisibleOutlined, EyeTwoTone} from '@ant-design/icons';
+import { Button, Flex, Card, Form, Input, Image, Space } from 'antd';
+import { UserOutlined, LockOutlined, EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
 import logo from '~/assets/logo.png'
-import {useDispatch} from 'react-redux';
-import {setLoading} from '~/redux/reducers/LoadingSlice'
-import {openToast} from "~/redux/reducers/ToastSlice.js";
-import {loginStart,loginFailed,loginSuccess} from "~/redux/reducers/loginSlice.js";
+import { useDispatch } from 'react-redux';
+import { setLoading } from '~/redux/reducers/LoadingSlice'
+import { openToast } from "~/redux/reducers/ToastSlice.js";
+import {  loginFailed, loginSuccess } from "~/redux/reducers/loginSlice.js";
 import apiRequest from "~/service/apiRequest.js";
 
 const Login = () => {
@@ -36,52 +36,52 @@ const Login = () => {
             formIsValid = false;
             newErrors.password = 'Mật khẩu phải trong lớn hơn 8 kí tự';
         }
-        formIsValid === false ?  setErrors(newErrors) :  setErrors(prevState => ({
+        formIsValid === false ? setErrors(newErrors) : setErrors(prevState => ({
             ...prevState,
             email: '',
             password: '',
         }));
         return formIsValid
     }
-    const handleSubmit = async () => {
+    const handleSubmit = () => {
         const formIsValid = handleValidate();
         if (formIsValid) {
             dispatch(setLoading(true))
-            dispatch(loginStart(true))
-            try {
-                const res = await apiRequest.apiLogin.handleLogin(login);
-                console.log(res);
-            }catch (error){
-                if(error.code === 422){
-                    error.message = Object.values(error.message);
-                    error.message.forEach((message) => {
+            apiRequest.apiLogin.handleLogin(login)
+                .then(response => {
+                    dispatch(loginSuccess(response))
+                    dispatch(openToast({
+                        id: Math.random(),
+                        type: Constant.ToastType.SUCCESS,
+                        message: 'Server response',
+                        description: 'Đăng nhập thành công',
+                    }));
+                })
+                .catch(error => {
+                    dispatch(loginFailed())
+                    if (error.code === 422) {
+                        error.message = Object.values(error.message);
+                        error.message.forEach((message) => {
+                            dispatch(openToast({
+                                id: Math.random(),
+                                type: Constant.ToastType.ERROR,
+                                message: 'Validate Server',
+                                description: message[0],
+                            }));
+                        });
+                    } else {
                         dispatch(openToast({
                             id: Math.random(),
                             type: Constant.ToastType.ERROR,
-                            message: 'Validate Server',
-                            description: message[0],
+                            message: 'Server Response',
+                            description: error.message.message,
                         }));
-                    });
-                }else{
-                    dispatch(openToast({
-                        id: Math.random(),
-                        type: Constant.ToastType.ERROR,
-                        message: 'Server Response',
-                        description: error.message.message,
-                    }));
-                }
-            }finally {
-                dispatch(setLoading(false));
-            }
+                    }
+                })
+                .finally(() => {
+                    dispatch(setLoading(false));
+                })
         }
-    };
-    const handleSuccess = () => {
-        dispatch(openToast({
-            id: Math.random(),
-            type: 'success',
-            message: 'This is a success message',
-            description: 'This is a success message description',
-        }));
     };
     return (
         <Flex style={{
@@ -96,10 +96,10 @@ const Login = () => {
                 }}>
                 <Form
                     name="HVLogin"
-                    initialValues={{remember: true}}
+                    initialValues={{ remember: true }}
                     onFinish={handleSubmit}
                 >
-                    <Space direction="vertical" size="small" style={{display: 'flex'}}>
+                    <Space direction="vertical" size="small" style={{ display: 'flex' }}>
                         <Image
                             preview={false}
                             width={300}
@@ -114,13 +114,13 @@ const Login = () => {
                             help={errors.email}
                         >
                             <Input size="large"
-                                   value={login.email}
-                                   onChange={(e) => setLogin((prevState) => ({
-                                       ...prevState,
-                                       email: e.target.value,
-                                   }))}
-                                   prefix={<UserOutlined/>}
-                                   placeholder="Email đăng nhập"/>
+                                value={login.email}
+                                onChange={(e) => setLogin((prevState) => ({
+                                    ...prevState,
+                                    email: e.target.value,
+                                }))}
+                                prefix={<UserOutlined />}
+                                placeholder="Email đăng nhập" />
                         </Form.Item>
                         <Form.Item
                             name="password"
@@ -134,15 +134,15 @@ const Login = () => {
                                     ...prevState,
                                     password: e.target.value,
                                 }))}
-                                prefix={<LockOutlined/>}
+                                prefix={<LockOutlined />}
                                 placeholder="Mật khẩu"
-                                iconRender={(visible) => (visible ? <EyeTwoTone/> : <EyeInvisibleOutlined/>)}
+                                iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
                             />
 
                         </Form.Item>
                         <Form.Item>
                             <Flex align="center" justify="center">
-                                <Button type="primary" block  htmlType="submit">
+                                <Button type="primary" block htmlType="submit">
                                     Đăng nhập
                                 </Button>
                             </Flex>

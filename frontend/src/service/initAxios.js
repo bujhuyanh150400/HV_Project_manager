@@ -22,7 +22,7 @@ instance.interceptors.response.use(
     error => {
         const responseError = {
             code: error.response.status,
-            message: error.response.data == "" ? {message: "Lỗi hệ thống Server"} : error.response.data
+            message: error.response.data == "" ? { message: "Lỗi hệ thống Server" } : error.response.data
         }
         return Promise.reject(responseError);
     }
