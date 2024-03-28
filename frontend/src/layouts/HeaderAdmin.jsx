@@ -1,5 +1,5 @@
 
-const Header = () => {
+const HeaderAdmin = () => {
     return (
         <>
             đây là header
@@ -7,6 +7,6 @@ const Header = () => {
     );
 }
 
-export default Header;
+export default HeaderAdmin;
 
 
